@@ -39,6 +39,7 @@ type ClusterManager interface {
 	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
 	InstallAwsIamAuth(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) error
 	CreateAwsIamAuthCaSecret(ctx context.Context, cluster *types.Cluster) error
+	CreateAwsEcrCredSecret(ctx context.Context, cluster *types.Cluster) error
 }
 
 type GitOpsManager interface {

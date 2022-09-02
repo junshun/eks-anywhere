@@ -60,6 +60,7 @@ type ClusterManager struct {
 	awsIamAuth              AwsIamAuth
 	controlPlaneWaitTimeout time.Duration
 	externalEtcdWaitTimeout time.Duration
+	awsEcrCred              AwsEcrCred
 }
 
 type ClusterClient interface {
@@ -119,9 +120,13 @@ type AwsIamAuth interface {
 	GenerateAwsIamAuthKubeconfig(clusterSpec *cluster.Spec, serverUrl, tlsCert string) ([]byte, error)
 }
 
+type AwsEcrCred interface {
+	GenerateAwsConfig() ([]byte, error)
+}
+
 type ClusterManagerOpt func(*ClusterManager)
 
-func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, opts ...ClusterManagerOpt) *ClusterManager {
+func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, awsEcrCred AwsEcrCred, opts ...ClusterManagerOpt) *ClusterManager {
 	retrier := retrier.NewWithMaxRetries(maxRetries, defaultBackOffPeriod)
 	retrierClient := NewRetrierClient(NewClient(clusterClient), retrier)
 	c := &ClusterManager{
@@ -135,6 +140,7 @@ func New(clusterClient ClusterClient, networking Networking, writer filewriter.F
 		machineBackoff:          machineBackoff,
 		machinesMinWait:         defaultMachinesMinWait,
 		awsIamAuth:              awsIamAuth,
+		awsEcrCred:              awsEcrCred,
 		controlPlaneWaitTimeout: DefaultControlPlaneWait,
 		externalEtcdWaitTimeout: DefaultEtcdWait,
 	}
@@ -652,6 +658,18 @@ func (c *ClusterManager) generateAwsIamAuthKubeconfig(ctx context.Context, manag
 		return fmt.Errorf("writing aws-iam-authenticator kubeconfig to %s: %v", writtenFile, err)
 	}
 	logger.V(3).Info("Generated aws-iam-authenticator kubeconfig", "kubeconfig", writtenFile)
+	return nil
+}
+
+func (c *ClusterManager) CreateAwsEcrCredSecret(ctx context.Context, cluster *types.Cluster) error {
+	awsEcrCredSecret, err := c.awsEcrCred.GenerateAwsConfig()
+	if err != nil {
+		return fmt.Errorf("generating aws ecr credential config secret: %v", err)
+	}
+	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, awsEcrCredSecret)
+	if err != nil {
+		return fmt.Errorf("applying aws ecr credential config secret: %v", err)
+	}
 	return nil
 }
 

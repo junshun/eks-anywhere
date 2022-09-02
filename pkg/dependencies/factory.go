@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/awsecrcred"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -64,6 +65,7 @@ type Dependencies struct {
 	Networking                clustermanager.Networking
 	CiliumTemplater           *cilium.Templater
 	AwsIamAuth                clustermanager.AwsIamAuth
+	AwsEcrCred                clustermanager.AwsEcrCred
 	ClusterManager            *clustermanager.ClusterManager
 	Bootstrapper              *bootstrapper.Bootstrapper
 	GitOpsFlux                *flux.Flux
@@ -670,6 +672,15 @@ func (f *Factory) WithAwsIamAuth() *Factory {
 	return f
 }
 
+func (f *Factory) WithAwsEcrCred() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		f.dependencies.AwsEcrCred = awsecrcred.NewAwsEcrCred()
+		return nil
+	})
+
+	return f
+}
+
 type bootstrapperClient struct {
 	*executables.Kind
 	*executables.Kubectl
@@ -696,8 +707,7 @@ type clusterManagerClient struct {
 }
 
 func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, opts ...clustermanager.ClusterManagerOpt) *Factory {
-	f.WithClusterctl().WithKubectl().WithNetworking(clusterConfig).WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth()
-
+	f.WithClusterctl().WithKubectl().WithNetworking(clusterConfig).WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth().WithAwsEcrCred()
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.ClusterManager != nil {
 			return nil
@@ -712,6 +722,7 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, opts ...cl
 			f.dependencies.Writer,
 			f.dependencies.DignosticCollectorFactory,
 			f.dependencies.AwsIamAuth,
+			f.dependencies.AwsEcrCred,
 			opts...,
 		)
 		return nil
