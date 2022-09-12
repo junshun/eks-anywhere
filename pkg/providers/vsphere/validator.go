@@ -16,7 +16,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/govmomi"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
-	"github.com/aws/eks-anywhere/pkg/types"
 )
 
 const (
@@ -278,18 +277,19 @@ func (v *Validator) validateTemplatePresence(ctx context.Context, datacenter str
 }
 
 func (v *Validator) validateTemplateTags(ctx context.Context, spec *Spec, machineConfig *anywherev1.VSphereMachineConfig) error {
-	tags, err := v.govc.GetTags(ctx, machineConfig.Spec.Template)
-	if err != nil {
-		return fmt.Errorf("validating template tags: %v", err)
-	}
-
-	tagsLookup := types.SliceToLookup(tags)
-	for _, t := range requiredTemplateTags(spec.Spec, machineConfig) {
-		if !tagsLookup.IsPresent(t) {
-			// TODO: maybe add help text about to how to tag a template?
-			return fmt.Errorf("template %s is missing tag %s", machineConfig.Spec.Template, t)
+	/*
+		tags, err := v.govc.GetTags(ctx, machineConfig.Spec.Template)
+		if err != nil {
+			return fmt.Errorf("validating template tags: %v", err)
 		}
-	}
+
+		tagsLookup := types.SliceToLookup(tags)
+		for _, t := range requiredTemplateTags(spec.Spec, machineConfig) {
+			if !tagsLookup.IsPresent(t) {
+				// TODO: maybe add help text about to how to tag a template?
+				return fmt.Errorf("template %s is missing tag %s", machineConfig.Spec.Template, t)
+			}
+		}*/
 
 	return nil
 }

@@ -43,6 +43,14 @@ func AwsIamAuthExtraArgs(awsiam *v1alpha1.AWSIamConfig) ExtraArgs {
 	return args
 }
 
+func AwsEcrCredExtraArgs() ExtraArgs {
+	args := ExtraArgs{}
+	args.AddIfNotEmpty("image-credential-provider-config", "/etc/kubernetes/credential-provider-config.yaml")
+	args.AddIfNotEmpty("image-credential-provider-bin-dir", "/usr/libexec/kubernetes/kubelet-plugins/credential-providers")
+	args.AddIfNotEmpty("feature-gates", "KubeletCredentialProviders=true")
+	return args
+}
+
 // FeatureGatesExtraArgs takes a list of features with the value and returns it in the proper format
 // Example FeatureGatesExtraArgs("ServiceLoadBalancerClass=true")
 func FeatureGatesExtraArgs(features ...string) ExtraArgs {

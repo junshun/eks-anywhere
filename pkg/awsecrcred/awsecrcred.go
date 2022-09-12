@@ -31,7 +31,7 @@ func (a *AwsEcrCred) GenerateAwsConfig() ([]byte, error) {
 	}
 
 	awsConfig := fmt.Sprintf(
-		"[eksa-packages]\n"+
+		"[profile eksa-packages]\n"+
 			"aws_access_key_id=%s\n"+
 			"aws_secret_access_key=%s\n"+
 			"region=%s",

@@ -110,6 +110,20 @@ func (mr *MockClusterManagerMockRecorder) ApplyBundles(arg0, arg1, arg2 interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyBundles", reflect.TypeOf((*MockClusterManager)(nil).ApplyBundles), arg0, arg1, arg2)
 }
 
+// CreateAwsEcrCredSecret mocks base method.
+func (m *MockClusterManager) CreateAwsEcrCredSecret(arg0 context.Context, arg1 *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateAwsEcrCredSecret", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateAwsEcrCredSecret indicates an expected call of CreateAwsEcrCredSecret.
+func (mr *MockClusterManagerMockRecorder) CreateAwsEcrCredSecret(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAwsEcrCredSecret", reflect.TypeOf((*MockClusterManager)(nil).CreateAwsEcrCredSecret), arg0, arg1)
+}
+
 // CreateAwsIamAuthCaSecret mocks base method.
 func (m *MockClusterManager) CreateAwsIamAuthCaSecret(arg0 context.Context, arg1 *types.Cluster) error {
 	m.ctrl.T.Helper()

@@ -55,9 +55,38 @@ spec:
 {{ .kubeletExtraArgs.ToYaml | indent 12 }}
 {{- end }}
           name: '{{"{{"}} ds.meta_data.hostname {{"}}"}}'
-{{- if and (ne .format "bottlerocket") (or .proxyConfig .registryMirrorConfiguration) }}
+#{{- if and (ne .format "bottlerocket") (or .proxyConfig .registryMirrorConfiguration) }}
+      #files:
+#{{- end }}
       files:
-{{- end }}
+      - content: |
+          apiVersion: kubelet.config.k8s.io/v1alpha1
+          kind: CredentialProviderConfig
+          providers:
+            - name: ecr-credential-provider
+              matchImages: 
+                - "*.dkr.ecr.*.amazonaws.com"
+              defaultCacheDuration: "12h"
+              apiVersion: credentialprovider.kubelet.k8s.io/v1alpha1
+              env:
+                - name: AWS_PROFILE
+                  value: eksa-packages
+                - name: AWS_CONFIG_FILE
+                  value: /root/aws-ecr-creds
+                - name: PATH
+                  value: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+                - name: HOME
+                  value: /root
+        owner: root:root
+        path: /etc/kubernetes/credential-provider-config.yaml
+        permissions: "0600"
+      - contentFrom:
+          secret:
+            key: config
+            name: aws-ecr-cred-config
+        owner: root:root
+        path: /root/aws-ecr-creds
+        permissions: "0600"
 {{- if and .proxyConfig (ne .format "bottlerocket") }}
       - content: |
           [Service]
@@ -88,6 +117,9 @@ spec:
 {{- end }}
 {{- end }}
       preKubeadmCommands:
+      - sudo mkdir -p /usr/libexec/kubernetes/kubelet-plugins/credential-providers
+      - sudo wget -O /usr/libexec/kubernetes/kubelet-plugins/credential-providers/ecr-credential-provider https://github.com/junshun/eks-anywhere-packages/releases/download/v0.1.9/ecr-credential-provider
+      - sudo chmod +x /usr/libexec/kubernetes/kubelet-plugins/credential-providers/ecr-credential-provider
 {{- if and .registryMirrorConfiguration (ne .format "bottlerocket") }}
       - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
 {{- end }}
