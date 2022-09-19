@@ -142,9 +142,9 @@ spec:
           secret:
             key: config
             name: aws-ecr-cred-config
-          owner: root:root
-          path: /root/aws-ecr-creds
-          permissions: "0600"
+        owner: root:root
+        path: /root/aws-ecr-creds
+        permissions: "0600"
       - content: |
           apiVersion: kubelet.config.k8s.io/v1alpha1
           kind: CredentialProviderConfig
