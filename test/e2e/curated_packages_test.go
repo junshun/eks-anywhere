@@ -20,13 +20,18 @@ import (
 const (
 	EksaPackagesNamespace              = "eksa-packages"
 	EksaPackageControllerHelmChartName = "eks-anywhere-packages"
-	EksaPackagesSourceRegistry         = "public.ecr.aws/l0g8r8j6"
-	EksaPackageControllerHelmURI       = "oci://" + EksaPackagesSourceRegistry + "/eks-anywhere-packages"
-	EksaPackageControllerHelmVersion   = "0.2.7-eks-a-v0.0.0-dev-release-0.11-build.219"
-	EksaPackageBundleURI               = "oci://" + EksaPackagesSourceRegistry + "/eks-anywhere-packages-bundles"
+	//EksaPackagesSourceRegistry         = "public.ecr.aws/l0g8r8j6"
+	EksaPackagesSourceRegistry = "public.ecr.aws/v7z3c3p2"
+	//EksaPackageControllerHelmURI       = "oci://" + EksaPackagesSourceRegistry + "/eks-anywhere-packages"
+	EksaPackageControllerHelmURI = "oci://public.ecr.aws/v7z3c3p2/eks-anywhere-packages"
+	//EksaPackageControllerHelmVersion   = "0.2.7-eks-a-v0.0.0-dev-release-0.11-build.219"
+	EksaPackageControllerHelmVersion = "0.3.2-f56c753640a6bb455c2b6318853aeec1cd057400"
+	//EksaPackageBundleURI               = "oci://" + EksaPackagesSourceRegistry + "/eks-anywhere-packages-bundles"
+	EksaPackageBundleURI = "oci://" + "public.ecr.aws/l0g8r8j6" + "/eks-anywhere-packages-bundles"
 )
 
-var EksaPackageControllerHelmValues = []string{"sourceRegistry=public.ecr.aws/l0g8r8j6"}
+//var EksaPackageControllerHelmValues = []string{"sourceRegistry=public.ecr.aws/l0g8r8j6"}
+var EksaPackageControllerHelmValues = []string{"sourceRegistry=public.ecr.aws/v7z3c3p2"}
 
 type resourcePredicate func(string, error) bool
 
@@ -269,6 +274,18 @@ func TestCPackagesVSphereKubernetes122BottleRocketSimpleFlow(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+	)
+	runCuratedPackageInstallSimpleFlow(test)
+}
+
+func TestCPackagesCloudStackRedhatKubernetes121SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewCloudStack(t, framework.WithCloudStackRedhat121()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube121),
+			"my-packages-test", EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
 	runCuratedPackageInstallSimpleFlow(test)

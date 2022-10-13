@@ -906,7 +906,7 @@ func (e *ClusterE2ETest) InstallCuratedPackage(packageName, packagePrefix string
 	e.RunEKSA([]string{
 		"install", "package", packageName,
 		"--package-name=" + packagePrefix, "-v=9",
-		"--cluster=" + e.ClusterName,
+		"--cluster", e.ClusterName,
 		strings.Join(opts, " "),
 	})
 }
@@ -923,6 +923,7 @@ func (e *ClusterE2ETest) UninstallCuratedPackage(packagePrefix string, opts ...s
 	os.Setenv("KUBECONFIG", e.kubeconfigFilePath())
 	e.RunEKSA([]string{
 		"delete", "package", packagePrefix, "-v=9",
+		"--cluster", e.ClusterName,
 		strings.Join(opts, " "),
 	})
 }
@@ -1006,7 +1007,7 @@ func (e *ClusterE2ETest) VerifyHarborPackageInstalled(prefix string) {
 func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string) {
 	ctx := context.Background()
 
-	ns := constants.EksaPackagesName
+	ns := "default"
 	err := e.KubectlClient.WaitForService(ctx,
 		e.cluster().KubeconfigFile, "5m", name, ns)
 	if err != nil {
