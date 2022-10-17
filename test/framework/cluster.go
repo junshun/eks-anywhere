@@ -899,14 +899,14 @@ func (e *ClusterE2ETest) InstallCuratedPackagesController() {
 	}
 }
 
-func (e *ClusterE2ETest) InstallCuratedPackage(packageName, packagePrefix string, opts ...string) {
+func (e *ClusterE2ETest) InstallCuratedPackage(packageName, packagePrefix string, clusterName string, opts ...string) {
 	os.Setenv("CURATED_PACKAGES_SUPPORT", "true")
 	// The package install command doesn't (yet?) have a --kubeconfig flag.
 	os.Setenv("KUBECONFIG", e.kubeconfigFilePath())
 	e.RunEKSA([]string{
 		"install", "package", packageName,
 		"--package-name=" + packagePrefix, "-v=9",
-		"--cluster", e.ClusterName,
+		"--cluster", clusterName,
 		strings.Join(opts, " "),
 	})
 }
@@ -918,12 +918,12 @@ func (e *ClusterE2ETest) CreateResource(ctx context.Context, resource string) {
 	}
 }
 
-func (e *ClusterE2ETest) UninstallCuratedPackage(packagePrefix string, opts ...string) {
+func (e *ClusterE2ETest) UninstallCuratedPackage(packagePrefix string, clusterName string, opts ...string) {
 	os.Setenv("CURATED_PACKAGES_SUPPORT", "true")
 	os.Setenv("KUBECONFIG", e.kubeconfigFilePath())
 	e.RunEKSA([]string{
 		"delete", "package", packagePrefix, "-v=9",
-		"--cluster", e.ClusterName,
+		"--cluster", clusterName,
 		strings.Join(opts, " "),
 	})
 }

@@ -177,9 +177,24 @@ func runCuratedPackageInstallSimpleFlow(test *framework.ClusterE2ETest) {
 	test.WithCluster(func(e *framework.ClusterE2ETest) {
 		packageName := "hello-eks-anywhere"
 		packagePrefix := "test"
-		e.InstallCuratedPackage(packageName, packagePrefix)
+		e.InstallCuratedPackage(packageName, packagePrefix, e.ClusterName)
 		e.VerifyHelloPackageInstalled(packagePrefix + "-" + packageName)
 	})
+}
+
+func runCuratedPackageInstallSimpleFlowWorkloadCluster(test *framework.MulticlusterE2ETest) {
+	test.CreateManagementCluster()
+	test.RunInWorkloadClusters(func(e *framework.WorkloadCluster) {
+		e.GenerateClusterConfig()
+		e.CreateCluster()
+		packageName := "hello-eks-anywhere"
+		packagePrefix := "test"
+		test.ManagementCluster.InstallCuratedPackage(packageName, packagePrefix, e.ClusterName)
+		e.VerifyHelloPackageInstalled(packagePrefix + "-" + packageName)
+		e.DeleteCluster()
+	})
+	time.Sleep(5 * time.Minute)
+	test.DeleteManagementCluster()
 }
 
 // There are many tests here, each covers a different combination described in
@@ -289,4 +304,32 @@ func TestCPackagesCloudStackRedhatKubernetes121SimpleFlow(t *testing.T) {
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
+}
+
+func TestCPackagesCloudStackKubernetes121WorkloadCluster(t *testing.T) {
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat121())
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube121),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithStackedEtcdTopology(),
+			),
+		),
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube121),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithStackedEtcdTopology(),
+			),
+		),
+	)
+	runCuratedPackageInstallSimpleFlowWorkloadCluster(test)
 }
