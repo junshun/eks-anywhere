@@ -22,6 +22,7 @@ import (
 	"github.com/pkg/errors"
 	rapi "github.com/tinkerbell/rufio/api/v1alpha1"
 	rctrl "github.com/tinkerbell/rufio/controllers"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
@@ -1119,4 +1120,17 @@ func (e *ClusterE2ETest) forwardPortToService(ctx context.Context,
 		pfCancel()
 		wg.Wait()
 	}, errCh
+}
+
+func (e *ClusterE2ETest) VerifyPackageControllerNotInstalled() {
+	ctx := context.Background()
+
+	ns := constants.EksaPackagesName
+	packageDeployment := "eks-anywhere-packages"
+
+	_, err := e.KubectlClient.GetDeployment(ctx, packageDeployment, ns, e.cluster().KubeconfigFile)
+
+	if !apierrors.IsNotFound(err) {
+		e.T.Fatalf("found deployment for package controller in workload cluster %s : %s", e.ClusterName, err)
+	}
 }
