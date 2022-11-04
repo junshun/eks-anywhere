@@ -332,30 +332,35 @@ func TestCPackagesVSphereKubernetes122BottleRocketSimpleFlow(t *testing.T) {
 }
 
 func TestCPackagesVSphereKubernetes121UbuntuWorkloadCluster(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
 	provider := framework.NewVSphere(t, framework.WithUbuntu121())
 	test := setupSimpleMultiCluster(t, provider, v1alpha1.Kube121)
 	runCuratedPackageRemoteClusterInstallSimpleFlow(test)
 }
 
 func TestCPackagesVSphereKubernetes121BottleRocketWorkloadCluster(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
 	provider := framework.NewVSphere(t, framework.WithBottleRocket121())
 	test := setupSimpleMultiCluster(t, provider, v1alpha1.Kube121)
 	runCuratedPackageRemoteClusterInstallSimpleFlow(test)
 }
 
 func TestCPackagesVSphereKubernetes122UbuntuWorkloadCluster(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
 	provider := framework.NewVSphere(t, framework.WithUbuntu122())
 	test := setupSimpleMultiCluster(t, provider, v1alpha1.Kube122)
 	runCuratedPackageRemoteClusterInstallSimpleFlow(test)
 }
 
 func TestCPackagesVSphereKubernetes122BottleRocketWorkloadCluster(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
 	provider := framework.NewVSphere(t, framework.WithBottleRocket122())
 	test := setupSimpleMultiCluster(t, provider, v1alpha1.Kube122)
 	runCuratedPackageRemoteClusterInstallSimpleFlow(test)
 }
 
 func TestCPackagesCloudStackRedhatKubernetes121SimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat121()),
@@ -368,6 +373,7 @@ func TestCPackagesCloudStackRedhatKubernetes121SimpleFlow(t *testing.T) {
 }
 
 func TestCPackagesCloudStackRedhatKubernetes121WorkloadCluster(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
 	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat121())
 	test := setupSimpleMultiCluster(t, provider, v1alpha1.Kube121)
 	runCuratedPackageRemoteClusterInstallSimpleFlow(test)
