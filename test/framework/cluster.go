@@ -934,7 +934,7 @@ func (e *ClusterE2ETest) InstallCuratedPackage(packageName, packagePrefix, kubec
 // InstallCuratedPackageFile will install a curated package from a yaml file, this is useful since target namespace isn't supported on the CLI.
 func (e *ClusterE2ETest) InstallCuratedPackageFile(packageFile, kubeconfig string, opts ...string) {
 	os.Setenv("CURATED_PACKAGES_SUPPORT", "true")
-	os.Setenv("KUBECONFIG", e.kubeconfigFilePath())
+	os.Setenv("KUBECONFIG", kubeconfig)
 	e.T.Log("Installing EKS-A Packages file", packageFile)
 	e.RunEKSA([]string{
 		"apply", "package", "-f", packageFile, "-v=9", strings.Join(opts, " "),
@@ -1121,5 +1121,18 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string) {
 	ok := strings.Contains(logs, "Amazon EKS Anywhere")
 	if !ok {
 		e.T.Fatalf("expected Amazon EKS Anywhere, got %T", logs)
+	}
+}
+
+func (e *ClusterE2ETest) VerifyPackageControllerNotInstalled() {
+	ctx := context.Background()
+
+	ns := constants.EksaPackagesName
+	packageDeployment := "eks-anywhere-packages"
+
+	_, err := e.KubectlClient.GetDeployment(ctx, packageDeployment, ns, e.cluster().KubeconfigFile)
+
+	if !apierrors.IsNotFound(err) {
+		e.T.Fatalf("found deployment for package controller in workload cluster %s : %s", e.ClusterName, err)
 	}
 }
