@@ -65,6 +65,7 @@ type ClusterManager struct {
 	awsIamAuth              AwsIamAuth
 	controlPlaneWaitTimeout time.Duration
 	externalEtcdWaitTimeout time.Duration
+	awsCred                 AwsCred
 }
 
 type ClusterClient interface {
@@ -127,9 +128,14 @@ type AwsIamAuth interface {
 	UpgradeAWSIAMAuth(ctx context.Context, cluster *types.Cluster, spec *cluster.Spec) error
 }
 
+type AwsCred interface {
+	GenerateAwsConfigPackages() ([]byte, error)
+	GenerateCredProviderConfig() ([]byte, error)
+}
+
 type ClusterManagerOpt func(*ClusterManager)
 
-func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, opts ...ClusterManagerOpt) *ClusterManager {
+func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, awsCred AwsCred, opts ...ClusterManagerOpt) *ClusterManager {
 	retrier := retrier.NewWithMaxRetries(maxRetries, defaultBackOffPeriod)
 	retrierClient := NewRetrierClient(NewClient(clusterClient), retrier)
 	c := &ClusterManager{
@@ -143,6 +149,7 @@ func New(clusterClient ClusterClient, networking Networking, writer filewriter.F
 		machineBackoff:          machineBackoff,
 		machinesMinWait:         defaultMachinesMinWait,
 		awsIamAuth:              awsIamAuth,
+		awsCred:                 awsCred,
 		controlPlaneWaitTimeout: DefaultControlPlaneWait,
 		externalEtcdWaitTimeout: DefaultEtcdWait,
 	}
@@ -625,6 +632,28 @@ func (c *ClusterManager) InstallAwsIamAuth(ctx context.Context, management, work
 
 func (c *ClusterManager) CreateAwsIamAuthCaSecret(ctx context.Context, managementCluster *types.Cluster, workloadClusterName string) error {
 	return c.awsIamAuth.CreateAndInstallAWSIAMAuthCASecret(ctx, managementCluster, workloadClusterName)
+}
+
+func (c *ClusterManager) CreateAwsEcrCredSecretPackages(ctx context.Context, cluster *types.Cluster) error {
+	awsEcrCredSecret, err := c.awsCred.GenerateAwsConfigPackages()
+	if err != nil {
+		return fmt.Errorf("generating aws ecr credential config secret: %v", err)
+	}
+	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, awsEcrCredSecret)
+	if err != nil {
+		return fmt.Errorf("applying aws ecr credential config secret: %v", err)
+	}
+
+	credProviderConfig, err := c.awsCred.GenerateCredProviderConfig()
+	if err != nil {
+		return fmt.Errorf("generating CredentialProviderConfig: %v", err)
+	}
+	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, credProviderConfig)
+	if err != nil {
+		return fmt.Errorf("applying CredentialProviderConfig secret: %v", err)
+	}
+
+	return nil
 }
 
 func (c *ClusterManager) SaveLogsManagementCluster(ctx context.Context, spec *cluster.Spec, cluster *types.Cluster) error {

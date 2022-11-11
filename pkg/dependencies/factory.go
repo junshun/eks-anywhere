@@ -14,6 +14,7 @@ import (
 	"golang.org/x/exp/maps"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/awscred"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -73,6 +74,7 @@ type Dependencies struct {
 	CNIInstaller                workload.CNIInstaller
 	CiliumTemplater             *cilium.Templater
 	AwsIamAuth                  *awsiamauth.Installer
+	AwsCred                     *awscred.AwsCred
 	ClusterManager              *clustermanager.ClusterManager
 	Bootstrapper                *bootstrapper.Bootstrapper
 	GitOpsFlux                  *flux.Flux
@@ -765,6 +767,15 @@ func (f *Factory) WithAwsIamAuth() *Factory {
 	return f
 }
 
+func (f *Factory) WithAwsCred() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		f.dependencies.AwsCred = awscred.NewAwsCred()
+		return nil
+	})
+
+	return f
+}
+
 type bootstrapperClient struct {
 	*executables.Kind
 	*executables.Kubectl
@@ -791,7 +802,7 @@ type clusterManagerClient struct {
 }
 
 func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, opts ...clustermanager.ClusterManagerOpt) *Factory {
-	f.WithClusterctl().WithKubectl().WithNetworking(clusterConfig).WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth()
+	f.WithClusterctl().WithKubectl().WithNetworking(clusterConfig).WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth().WithAwsCred()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.ClusterManager != nil {
@@ -807,6 +818,7 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, opts ...cl
 			f.dependencies.Writer,
 			f.dependencies.DignosticCollectorFactory,
 			f.dependencies.AwsIamAuth,
+			f.dependencies.AwsCred,
 			opts...,
 		)
 		return nil

@@ -144,6 +144,11 @@ func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *ta
 		}
 	}
 
+	logger.Info("Creating Aws Config secret for ECR  on bootstrap cluster")
+	if err = commandContext.ClusterManager.CreateAwsEcrCredSecretPackages(ctx, bootstrapCluster); err != nil {
+		logger.Info("Failed Creating AWS Config %v", err)
+	}
+
 	logger.Info("Provider specific post-setup")
 	if err = commandContext.Provider.PostBootstrapSetup(ctx, commandContext.ClusterSpec.Cluster, bootstrapCluster); err != nil {
 		commandContext.SetError(err)
