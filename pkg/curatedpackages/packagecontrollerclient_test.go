@@ -335,6 +335,31 @@ func TestEnableCuratedPackagesSucceedInWorkloadCluster(t *testing.T) {
 	}
 }
 
+func TestEnableCuratedPackagesWithCredentialsPackage(t *testing.T) {
+	clusterSpec := &cluster.Spec{
+		Config: &cluster.Config{
+			Cluster: &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{},
+			},
+		},
+	}
+	for _, tt := range newPackageControllerTests(t) {
+		tt.command = curatedpackages.NewPackageControllerClient(
+			tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.chart,
+			tt.registryMirror,
+			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
+			curatedpackages.WithEksaRegion(tt.eksaRegion),
+			curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
+			curatedpackages.WithHTTPProxy(tt.httpProxy),
+			curatedpackages.WithHTTPSProxy(tt.httpsProxy),
+			curatedpackages.WithNoProxy(tt.noProxy),
+			curatedpackages.WithManagementClusterName(tt.clusterName),
+			curatedpackages.WithValuesFileWriter(tt.writer),
+			curatedpackages.WithClusterSpec(clusterSpec),
+		)
+	}
+}
+
 func getPBCSuccess(t *testing.T) func(context.Context, string, string, string, string, *packagesv1.PackageBundleController) error {
 	return func(_ context.Context, _, _, _, _ string, obj *packagesv1.PackageBundleController) error {
 		pbc := &packagesv1.PackageBundleController{

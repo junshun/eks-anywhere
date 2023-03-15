@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	awsProfile = "eksa-packages"
+	awsProfile = "default"
 )
 
 //go:embed config/aws-cred-secret.yaml
@@ -38,11 +38,10 @@ func (a *AwsCred) GenerateAwsConfigSecret() ([]byte, error) {
 	}
 
 	awsConfig := fmt.Sprintf(
-		"[profile %s]\n"+
+		"[%s]\n"+
 			"aws_access_key_id=%s\n"+
 			"aws_secret_access_key=%s\n"+
-			"region=%s",
-		awsProfile, eksaAccessKeyId, eksaSecretKey, eksaRegion)
+			"region=%s", awsProfile, eksaAccessKeyId, eksaSecretKey, eksaRegion)
 
 	awsConfigBytes := base64.StdEncoding.EncodeToString([]byte(awsConfig))
 
@@ -62,6 +61,7 @@ func (a *AwsCred) GenerateCredentialPackageConfig(clusterName string, sourceRegi
 	values := map[string]string{
 		"clusterName":    clusterName,
 		"sourceRegistry": sourceRegistry,
+		"profile":        awsProfile,
 	}
 	credPackageConfig, err := templater.Execute(credPackageTemplates, values)
 	if err != nil {

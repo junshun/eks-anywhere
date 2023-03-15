@@ -119,7 +119,24 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		return err
 	}
 
-	return pc.waitForActiveBundle(ctx)
+	err = pc.waitForActiveBundle(ctx)
+	if err != nil {
+		return err
+	}
+
+	// check to see if credential package will be installed for user
+	if pc.clusterSpec != nil {
+		if (pc.eksaSecretAccessKey != "" && pc.eksaAccessKeyID != "") &&
+			pc.registryMirror == nil &&
+			pc.clusterSpec.Packages.CronJob.Disable != true {
+			values = append(values, "cronjob.suspend=true")
+			err = pc.InstallCredentialsPackage(ctx, sourceRegistry)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return err
 }
 
 // GetCuratedPackagesRegistries gets value for configurable registries from PBC.
@@ -167,6 +184,30 @@ func (pc *PackageControllerClient) CreateHelmOverrideValuesYaml() (string, []byt
 		return "", content, err
 	}
 	return filePath, content, nil
+}
+
+// InstallCredentialsPackage creates base64 encoded secret and applies the credential package object
+func (pc *PackageControllerClient) InstallCredentialsPackage(ctx context.Context, sourceRegistry string) error {
+	applyParams := []string{"apply", "-f", "-", "--kubeconfig", pc.kubeConfig}
+	awsCred := NewAwsCred()
+	secret, err := awsCred.GenerateAwsConfigSecret()
+	if err != nil {
+		return err
+	}
+	_, err = pc.kubectl.ExecuteFromYaml(ctx, secret, applyParams...)
+	if err != nil {
+		return err
+	}
+	packageConfig, err := awsCred.GenerateCredentialPackageConfig(pc.clusterName, sourceRegistry)
+	if err != nil {
+		return err
+	}
+	_, err = pc.kubectl.ExecuteFromYaml(ctx, packageConfig, applyParams...)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (pc *PackageControllerClient) generateHelmOverrideValues() ([]byte, error) {
