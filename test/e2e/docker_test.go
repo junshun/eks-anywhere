@@ -186,6 +186,18 @@ func TestDockerKubernetes124CuratedPackagesAdotSimpleFlow(t *testing.T) {
 	runCuratedPackagesAdotInstallSimpleFlow(test) // other args as necessary
 }
 
+func TestDockerKubernetes125CuratedPackagesSimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube125)),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube125),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
+	)
+	runCuratedPackageInstallSimpleFlow(test)
+}
+
 func TestDockerCuratedPackagesMetalLB(t *testing.T) {
 	suite.Run(t, new(Suite))
 }
