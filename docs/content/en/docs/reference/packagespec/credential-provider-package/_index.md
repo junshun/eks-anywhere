@@ -1,6 +1,6 @@
 ---
 title: "Credential Provider Package Configuration"
-linkTitle: "credential-provider-package"
+linkTitle: "Credential-Provider-Package"
 weight: 20
 description: >
 ---
